@@ -16,6 +16,10 @@ export const setupServer = () => {
   app.use(pino());
   app.use(express.json());
 
+  app.get("/", (req, res) => {
+    res.json({ message: "Сервер працює! ✌️" });
+  });
+
   app.use('/contacts', contactsRouter);
 
   app.use(notFoundHandler);
