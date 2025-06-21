@@ -1,11 +1,19 @@
-// eslint-disable-next-line no-unused-vars
+//src/middleware/errorHandler
+import { HttpError } from 'http-errors';
+
 export const errorHandler = (err, req, res, next) => {
-  const status = err.status || 500;
-  const message = err.message || 'Something goes wrong';
-//stat
-  res.status(status).json({
-    status,
-    message,
-    data: message,
+  if (err instanceof HttpError) {
+    res.status(err.status).json({
+      status: err.status,
+      message: err.message,
+      data: err.data || null,
+    });
+    return;
+  }
+
+  res.status(500).json({
+    status: 500,
+    message: 'Something went wrong',
+    error: true,
   });
 };

@@ -1,5 +1,6 @@
-import createError from 'http-errors';
+// src/middlewares/notFoundHandler.js;
+import createHttpError from 'http-errors';
 
 export const notFoundHandler = (req, res, next) => {
-  next(createError(404, 'Маршрут не знайдено'));
+  next(createHttpError(404, 'Route not found'));
 };
