@@ -7,8 +7,6 @@ export const parseSortParams = (query) => {
     'name',
     'phoneNumber',
     'email',
-    'contactType',
-    'isFavourite',
   ];
 
   const sortBy = keysOfContact.includes(query.sortBy) ? query.sortBy : '_id';

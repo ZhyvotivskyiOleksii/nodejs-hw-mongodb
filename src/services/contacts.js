@@ -7,23 +7,28 @@ import { calculatePaginationData } from '../utils/calculatePaginationData.js';
 export const getAllContacts = async ({
   page = 1,
   perPage = 10,
-  sortBy = '_id',
-  sortOrder = 'asc',
   filter = {},
+  sort = { name: 1 },
 }) => {
-  const limit = perPage;
-  const skip = (page - 1) * perPage;
+  const limit = parseInt(perPage, 10);
+  const skip = (parseInt(page, 10) - 1) * limit;
 
   try {
-    const contactsQuery = ContactsCollection.find(filter);
+    console.log('Filter applied:', filter);
+    console.log('Pagination params:', { page, perPage, limit, skip });
+    console.log('Sort params:', sort);
+
+
+    const contactsQuery = ContactsCollection.find({ userId: filter.userId }).sort(sort);
+
+
     const totalCount = await ContactsCollection.find()
       .merge(contactsQuery)
       .countDocuments();
 
-    const contacts = await contactsQuery
-      .skip(skip)
-      .limit(limit)
-      .sort({ [sortBy]: sortOrder });
+
+    const contacts = await contactsQuery.skip(skip).limit(limit);
+
 
     const paginationData = calculatePaginationData(totalCount, perPage, page);
 
@@ -33,6 +38,8 @@ export const getAllContacts = async ({
     throw createHttpError(500, 'Failed to fetch contacts');
   }
 };
+
+
 
 // Получение контакта по ID
 export const getContactByIdService = async (contactId, userId) => {
@@ -46,19 +53,23 @@ export const getContactByIdService = async (contactId, userId) => {
 
 // Создание контакта
 export const createContact = async (payload) => {
-  const existingContact = await ContactsCollection.findOne({
-    email: payload.email,
-    userId: payload.userId,
-  });
-  if (existingContact) {
-    throw createHttpError(
-      400,
-      `Contact with email ${payload.email} already exists`,
-    );
+  if (payload.email) {
+    const existingContact = await ContactsCollection.findOne({
+      email: payload.email,
+      userId: payload.userId,
+    });
+
+    if (existingContact) {
+      throw createHttpError(
+        400,
+        `Contact with email ${payload.email} already exists`
+      );
+    }
   }
 
   return await ContactsCollection.create(payload);
 };
+
 
 // Обновление контакта
 export const updateContact = async (contactId, updateData, userId) => {
@@ -78,7 +89,14 @@ export const updateContact = async (contactId, updateData, userId) => {
 export const deleteContact = async (contactId, userId) => {
   const deletedContact = await ContactsCollection.findOneAndDelete({
     _id: contactId,
-    userId,
+    userId: userId,
   });
-  if (!deletedContact) throw createHttpError(404, 'Contact not found');
+
+  if (!deletedContact) {
+    throw createHttpError(404, 'Contact not found');
+  }
+
+  return deletedContact;
 };
+
+

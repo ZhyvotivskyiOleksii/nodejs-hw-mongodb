@@ -10,8 +10,23 @@ import { sendEmail } from '../utils/sendMail.js';
 import handlebars from 'handlebars';
 import path from 'node:path';
 import fs from 'node:fs/promises';
+import { getFullNameFromGoogleTokenPayload, validateCode } from '../utils/googleOAuth2.js';
 
-// Створення користувача  якщо його немає
+
+const createSession = (userId) => {
+  const accessToken = randomBytes(30).toString("base64");
+  const refreshToken = randomBytes(30).toString("base64");
+
+  return {
+    userId,
+    accessToken,
+    refreshToken,
+    accessTokenValidUntil: new Date(Date.now() + FIFTEEN_MINUTES),
+    refreshTokenValidUntil: new Date(Date.now() + ONE_DAY),
+  };
+};
+
+
 //register
 export const registerUser = async (payload) => {
   const user = await UsersCollection.findOne({ email: payload.email });
@@ -52,19 +67,11 @@ export const loginUser = async (payload) => {
 //logout
 
 export const logoutUser = async (sessionId) => {
+  if (!sessionId) {
+    throw createHttpError(400, "Session ID is required");
+  }
+
   await SessionsCollection.deleteOne({ _id: sessionId });
-};
-
-const createSession = () => {
-  const accessToken = randomBytes(30).toString('base64');
-  const refreshToken = randomBytes(30).toString('base64');
-
-  return {
-    accessToken,
-    refreshToken,
-    accessTokenValidUntil: new Date(Date.now() + FIFTEEN_MINUTES),
-    refreshTokenValidUntil: new Date(Date.now() + ONE_DAY),
-  };
 };
 
 //refresh
@@ -118,6 +125,7 @@ export const requestResetToken = async (email) => {
   const template = handlebars.compile(templateSource);
 
   const resetLink = `${process.env.APP_DOMAIN}/reset-password?token=${resetToken}`;
+
   const html = template({
     name: user.name,
     link: resetLink,
@@ -148,7 +156,7 @@ export const resetPassword = async (payload) => {
   } catch (err) {
     if (err instanceof Error)
       throw createHttpError(401, 'Token is expired or invalid.');
-    throw err;
+    throw createHttpError(500, 'An unexpected error occurred.');
   }
 
   const user = await UsersCollection.findOne({
@@ -168,3 +176,32 @@ export const resetPassword = async (payload) => {
   );
   await SessionsCollection.deleteMany({ userId: user._id });
 };
+
+//loginOrSignupWithGoogle
+export const loginOrSignupWithGoogle = async (code) => {
+  const loginTicket = await validateCode(code);
+  const payload = loginTicket.getPayload();
+  if (!payload) throw createHttpError(401);
+
+  let user = await UsersCollection.findOne({ email: payload.email });
+  if (!user) {
+    const password = await bcrypt.hash(randomBytes(10), 10);
+    user = await UsersCollection.create({
+      email: payload.email,
+      name: getFullNameFromGoogleTokenPayload(payload),
+      password,
+    });
+  }
+  const newSession = createSession();
+
+  return await SessionsCollection.create({
+    userId: user._id,
+    ...newSession,
+  });
+};
+
+
+
+
+
+
