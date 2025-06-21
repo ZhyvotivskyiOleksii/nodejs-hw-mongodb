@@ -1,3 +1,4 @@
+//src/router/contacts.js
 import { Router } from 'express';
 import {
   getContactById,
@@ -14,21 +15,27 @@ import {
 } from '../validation/contacts.js';
 import { isValidId } from '../middlewares/isValidId.js';
 import { authenticate } from '../middlewares/authenticate.js';
+import { upload } from '../middlewares/multer.js';
 
 const router = Router();
 
-// Аутентификация применяется ко всем маршрутам
+
 router.use(authenticate);
 
 router.get('/', ctrlWrapper(getContactsController));
+
 router.get('/:contactId', isValidId, ctrlWrapper(getContactById));
+
 router.post(
   '/',
+  upload.single('photo'),
   validateBody(createContactSchema),
   ctrlWrapper(createContactsController),
 );
+
 router.patch(
   '/:contactId',
+  upload.single('photo'),
   isValidId,
   validateBody(updateContactSchema),
   ctrlWrapper(updateContactController),

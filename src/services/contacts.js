@@ -1,13 +1,54 @@
-// src/servicer/contacts.js
-import { ContactsCollection } from '../db/models/contacts.js';
+//src / services / contacts.js;
 import createHttpError from 'http-errors';
+import { ContactsCollection } from '../db/models/contacts.js';
 import { calculatePaginationData } from '../utils/calculatePaginationData.js';
 
-//create
+// Получение всех контактов с фильтрацией и пагинацией
+export const getAllContacts = async ({
+  page = 1,
+  perPage = 10,
+  sortBy = '_id',
+  sortOrder = 'asc',
+  filter = {},
+}) => {
+  const limit = perPage;
+  const skip = (page - 1) * perPage;
+
+  try {
+    const contactsQuery = ContactsCollection.find(filter);
+    const totalCount = await ContactsCollection.find()
+      .merge(contactsQuery)
+      .countDocuments();
+
+    const contacts = await contactsQuery
+      .skip(skip)
+      .limit(limit)
+      .sort({ [sortBy]: sortOrder });
+
+    const paginationData = calculatePaginationData(totalCount, perPage, page);
+
+    return { data: contacts, ...paginationData };
+  } catch (error) {
+    console.error('Error in getAllContacts:', error);
+    throw createHttpError(500, 'Failed to fetch contacts');
+  }
+};
+
+// Получение контакта по ID
+export const getContactByIdService = async (contactId, userId) => {
+  if (!contactId) throw createHttpError(400, 'Contact ID is required');
+
+  const contact = await ContactsCollection.findOne({ _id: contactId, userId });
+  if (!contact) throw createHttpError(404, 'Contact not found');
+
+  return contact;
+};
+
+// Создание контакта
 export const createContact = async (payload) => {
-  // Проверяем существование контакта с таким email
   const existingContact = await ContactsCollection.findOne({
     email: payload.email,
+    userId: payload.userId,
   });
   if (existingContact) {
     throw createHttpError(
@@ -16,70 +57,28 @@ export const createContact = async (payload) => {
     );
   }
 
-  // Если email уникален, создаем контакт
-  const contact = await ContactsCollection.create(payload);
-  return contact;
+  return await ContactsCollection.create(payload);
 };
 
-//update
-export const updateContact = async (contactId, updateData) => {
-  if (!contactId) {
-    throw createHttpError(400, 'Contact ID is required');
-  }
-  const updatedContact = await ContactsCollection.findByIdAndUpdate(
-    contactId,
+// Обновление контакта
+export const updateContact = async (contactId, updateData, userId) => {
+  if (!contactId) throw createHttpError(400, 'Contact ID is required');
+
+  const updatedContact = await ContactsCollection.findOneAndUpdate(
+    { _id: contactId, userId },
     updateData,
-    {
-      new: true,
-      runValidators: true,
-    },
+    { new: true, runValidators: true },
   );
 
+  if (!updatedContact) throw createHttpError(404, 'Contact not found');
   return updatedContact;
 };
 
-//delete
-export const deleteContact = async (contactId) => {
-  const contact = await ContactsCollection.findByIdAndDelete(contactId);
-  return contact;
-};
-
-//get
-export const getAllContacts = async ({
-  page = 1,
-  perPage = 10,
-  sortOrder = 'asc',
-  sortBy = '_id',
-  filter = {},
-}) => {
-  const limit = perPage;
-  const skip = (page - 1) * perPage;
-
-  try {
-    // Применяем фильтры
-    const contactsQuery = ContactsCollection.find(filter);
-    const contactsCount = await ContactsCollection.find()
-      .merge(contactsQuery)
-      .countDocuments();
-
-    const contacts = await contactsQuery
-      .skip(skip)
-      .limit(limit)
-      .sort({ [sortBy]: sortOrder })
-      .exec();
-
-    const paginationData = calculatePaginationData(
-      contactsCount,
-      perPage,
-      page,
-    );
-
-    return {
-      data: contacts,
-      ...paginationData,
-    };
-  } catch (error) {
-    console.error('Error in getAllContacts:', error);
-    throw error;
-  }
+// Удаление контакта
+export const deleteContact = async (contactId, userId) => {
+  const deletedContact = await ContactsCollection.findOneAndDelete({
+    _id: contactId,
+    userId,
+  });
+  if (!deletedContact) throw createHttpError(404, 'Contact not found');
 };

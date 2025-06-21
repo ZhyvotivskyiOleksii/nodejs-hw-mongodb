@@ -4,6 +4,8 @@ import { loginUser } from '../services/auth.js';
 import { ONE_DAY } from '../constants/index.js';
 import { logoutUser } from '../services/auth.js';
 import { refreshUsersSession } from '../services/auth.js';
+import { requestResetToken } from '../services/auth.js';
+import { resetPassword } from '../services/auth.js';
 
 //register
 export const registerUserController = async (req, res) => {
@@ -62,6 +64,7 @@ const setupSession = (res, session) => {
   });
 };
 
+//refresh
 export const refreshUsersSessionController = async (req, res) => {
   const session = await refreshUsersSession({
     sessionId: req.cookies.sessionId,
@@ -77,4 +80,33 @@ export const refreshUsersSessionController = async (req, res) => {
       accessToken: session.accessToken,
     },
   });
+};
+
+export const requestResetEmailController = async (req, res, next) => {
+  try {
+    await requestResetToken(req.body.email);
+    res.status(200).json({
+      status: 200,
+      message: 'Reset password email has been successfully sent.',
+      data: {},
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+//reset
+// src/controllers/auth.js
+
+export const resetPasswordController = async (req, res, next) => {
+  try {
+    await resetPassword(req.body);
+    res.status(200).json({
+      status: 200,
+      message: 'Password has been successfully reset.',
+      data: {},
+    });
+  } catch (error) {
+    next(error);
+  }
 };
