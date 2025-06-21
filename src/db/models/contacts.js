@@ -14,11 +14,15 @@ const contactsSchema = new Schema(
     email: {
       type: String,
     },
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: 'users',
+      required: true,
+    },
     isFavourite: {
       type: Boolean,
       default: false,
     },
-
     contactType: {
       type: String,
       enum: ['work', 'home', 'personal'],

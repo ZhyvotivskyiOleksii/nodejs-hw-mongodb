@@ -3,12 +3,7 @@
 import mongoose from 'mongoose';
 import createHttpError from 'http-errors';
 import { ContactsCollection } from '../db/models/contacts.js';
-import {
-  createContact,
-  deleteContact,
-  getAllContacts,
-} from '../services/contacts.js';
-import { updateContact } from '../services/contacts.js';
+import { createContact, getAllContacts } from '../services/contacts.js';
 import { parseFilterParams } from '../utils/parseFilterParams.js';
 import { parsePaginationParams } from '../utils/parsePaginationParams.js';
 import { parseSortParams } from '../utils/parseSortParams.js';
@@ -31,7 +26,10 @@ export const getContactById = async (req, res) => {
     throw createHttpError(400, `Invalid contact ID: ${contactId}`);
   }
 
-  const contact = await ContactsCollection.findById(contactId);
+  const contact = await ContactsCollection.findOne({
+    _id: contactId,
+    userId: req.user._id, // Перевіряємо, що контакт належить користувачу
+  });
 
   if (!contact) {
     throw createHttpError(404, 'Contact not found');
@@ -50,12 +48,17 @@ export const createContactsController = async (req, res) => {
     const { email } = req.body;
 
     // Проверяем, есть ли контакт с таким email
-    const existingContact = await ContactsCollection.findOne({ email });
+    const existingContact = await ContactsCollection.findOne({
+      email,
+      userId: req.user._id,
+    });
     if (existingContact) {
       throw createHttpError(400, `Contact with email ${email} already exists`);
     }
 
-    const contact = await createContact(req.body);
+    const contactData = { ...req.body, userId: req.user._id };
+
+    const contact = await createContact(contactData);
 
     res.status(201).json({
       status: 201,
@@ -75,24 +78,31 @@ export const updateContactController = async (req, res) => {
   const { contactId } = req.params;
   const updateData = req.body;
 
-  const updatedContact = await updateContact(contactId, updateData);
+  const contact = await ContactsCollection.findOneAndUpdate(
+    { _id: contactId, userId: req.user._id }, // Фільтруємо за userId
+    updateData,
+    { new: true, runValidators: true },
+  );
 
-  if (!updatedContact) {
+  if (!contact) {
     throw createHttpError(404, 'Contact not found');
   }
 
   res.json({
     status: 200,
-    message: 'Successfully patched a contact!',
-    data: updatedContact,
+    message: 'Successfully updated the contact!',
+    data: contact,
   });
 };
 
 //delete
-export const deleteContactController = async (req, res, next) => {
+export const deleteContactController = async (req, res) => {
   const { contactId } = req.params;
 
-  const contact = await deleteContact(contactId);
+  const contact = await ContactsCollection.findOneAndDelete({
+    _id: contactId,
+    userId: req.user._id, // Перевіряємо, що контакт належить користувачу
+  });
 
   if (!contact) {
     throw createHttpError(404, 'Contact not found');
@@ -105,7 +115,7 @@ export const deleteContactController = async (req, res, next) => {
 export const getContactsController = async (req, res) => {
   const { page, perPage } = parsePaginationParams(req.query);
   const { sortBy, sortOrder } = parseSortParams(req.query);
-  const filter = parseFilterParams(req.query);
+  const filter = { ...parseFilterParams(req.query), userId: req.user._id }; // Фільтруємо за userId
 
   try {
     const { data, ...meta } = await getAllContacts({
