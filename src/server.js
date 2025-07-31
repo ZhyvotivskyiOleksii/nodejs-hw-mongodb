@@ -21,8 +21,8 @@ export const setupServer = () => {
     res.json({ message: 'Сервер працює! ✌️' });
   });
 
-  // Головний API роут
-  app.use('/api/contacts', contactsRouter);
+  // 🔥 Виправлено: без /api
+  app.use('/contacts', contactsRouter);
 
   // Обробка 404
   app.use(notFoundHandler);
