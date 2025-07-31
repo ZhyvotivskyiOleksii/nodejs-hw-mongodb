@@ -16,14 +16,18 @@ export const setupServer = () => {
   app.use(pino());
   app.use(express.json());
 
-  app.get("/", (req, res) => {
-    res.json({ message: "Сервер працює! ✌️" });
+  // Рут для перевірки життя сервера
+  app.get('/', (req, res) => {
+    res.json({ message: 'Сервер працює! ✌️' });
   });
 
+  // Головний API роут
   app.use('/api/contacts', contactsRouter);
 
-
+  // Обробка 404
   app.use(notFoundHandler);
+
+  // Обробка помилок
   app.use(errorHandler);
 
   const PORT = process.env.PORT || 3000;
