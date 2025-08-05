@@ -1,11 +1,12 @@
 import express from 'express';
 import { ctrlWrapper } from '../utils/ctrlWrapper.js';
+
 import {
-  getAllContacts,
-  getContactById,
-  addContact,
-  updateContact,
-  deleteContact,
+  getContactsController,
+  getContactByIdController,
+  createContactController,
+  updateContactController,
+  deleteContactController,
 } from '../controllers/contactsController.js';
 
 import { isValidId } from '../middlewares/isValidId.js';
@@ -15,23 +16,24 @@ import {
   updateContactSchema,
 } from '../schemas/contactsSchemas.js';
 
+
 export const contactsRouter = express.Router();
 
+contactsRouter.get('/', ctrlWrapper(getContactsController));
 
-contactsRouter.get('/', ctrlWrapper(getAllContacts));
+contactsRouter.get('/:contactId', isValidId, ctrlWrapper(getContactByIdController));
 
-
-contactsRouter.get('/:contactId', isValidId, ctrlWrapper(getContactById));
-
-contactsRouter.post('/', validateBody(createContactSchema), ctrlWrapper(addContact));
-
+contactsRouter.post(
+  '/',
+  validateBody(createContactSchema),
+  ctrlWrapper(createContactController)
+);
 
 contactsRouter.patch(
   '/:contactId',
   isValidId,
   validateBody(updateContactSchema),
-  ctrlWrapper(updateContact)
+  ctrlWrapper(updateContactController)
 );
 
-
-contactsRouter.delete('/:contactId', isValidId, ctrlWrapper(deleteContact));
+contactsRouter.delete('/:contactId', isValidId, ctrlWrapper(deleteContactController));
