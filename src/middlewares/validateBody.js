@@ -5,7 +5,7 @@ export const validateBody = (schema) => {
   return (req, res, next) => {
     const { error } = schema.validate(req.body);
     if (error) {
-      return next(BadRequest(error.message)); // не забувай `return`, інакше далі піде next()
+      return next(BadRequest(error.message)); 
     }
     next();
   };

@@ -4,30 +4,40 @@ dotenv.config();
 import express from 'express';
 import cors from 'cors';
 import pino from 'pino-http';
+import cookieParser from 'cookie-parser';
 
 import { contactsRouter } from './routers/contacts.js';
+import { authRouter } from './routers/auth.js';
 import { notFoundHandler } from './middlewares/notFoundHandler.js';
 import { errorHandler } from './middlewares/errorHandler.js';
+import { authenticate } from './middlewares/authenticate.js'; // Додаємо мідлвару
 
 export const setupServer = () => {
   const app = express();
 
-  app.use(cors());
+  
+  app.use(cors({
+    origin: true,
+    credentials: true,
+  }));
+
   app.use(pino());
   app.use(express.json());
+  app.use(cookieParser()); 
 
-  // Рут для перевірки життя сервера
+  
   app.get('/', (req, res) => {
     res.json({ message: 'Сервер працює! ✌️' });
   });
 
-  // 🔥 Виправлено: без /api
-  app.use('/contacts', contactsRouter);
+  
+  app.use('/auth', authRouter);
 
-  // Обробка 404
+  
+  app.use('/contacts', authenticate, contactsRouter);
+
+  
   app.use(notFoundHandler);
-
-  // Обробка помилок
   app.use(errorHandler);
 
   const PORT = process.env.PORT || 3000;

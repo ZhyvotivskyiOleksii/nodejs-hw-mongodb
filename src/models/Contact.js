@@ -12,6 +12,12 @@ const contactSchema = new mongoose.Schema(
       default: 'personal',
       required: true,
     },
+    // Нове поле!
+    userId: { 
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: 'User', 
+      required: true 
+    },
   },
   { timestamps: true }
 );
