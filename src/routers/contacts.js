@@ -19,7 +19,7 @@ import { authenticate } from '../middlewares/authenticate.js';
 
 export const contactsRouter = express.Router();
 
-// Захист для всіх роутів (auth-middleware)
+
 contactsRouter.use(authenticate);
 
 contactsRouter.get('/', ctrlWrapper(getContactsController));
