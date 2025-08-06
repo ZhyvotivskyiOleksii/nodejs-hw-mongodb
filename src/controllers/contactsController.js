@@ -5,7 +5,6 @@ import {
   updateContactById,
   deleteContactById,
 } from '../services/contacts.js';
-
 import { Contact } from '../models/Contact.js';
 
 export const getContactsController = async (req, res) => {
@@ -18,7 +17,7 @@ export const getContactsController = async (req, res) => {
     isFavourite,
   } = req.query;
 
-  const filter = {};
+  const filter = { userId: req.user._id };
   if (type) filter.contactType = type;
   if (isFavourite !== undefined) filter.isFavourite = isFavourite === 'true';
 
@@ -51,7 +50,7 @@ export const getContactByIdController = async (req, res) => {
   const { contactId } = req.params;
   const contact = await getContactById(contactId);
 
-  if (!contact) {
+  if (!contact || String(contact.userId) !== String(req.user._id)) {
     throw createError(404, 'Контакт не знайдено');
   }
 
@@ -63,7 +62,8 @@ export const getContactByIdController = async (req, res) => {
 };
 
 export const createContactController = async (req, res) => {
-  const newContact = await createContact(req.body);
+  const contactData = { ...req.body, userId: req.user._id };
+  const newContact = await createContact(contactData);
 
   res.status(201).json({
     status: 201,
@@ -74,11 +74,13 @@ export const createContactController = async (req, res) => {
 
 export const updateContactController = async (req, res) => {
   const { contactId } = req.params;
-  const updatedContact = await updateContactById(contactId, req.body);
+  const contact = await getContactById(contactId);
 
-  if (!updatedContact) {
+  if (!contact || String(contact.userId) !== String(req.user._id)) {
     throw createError(404, 'Контакт не знайдено');
   }
+
+  const updatedContact = await updateContactById(contactId, req.body);
 
   res.status(200).json({
     status: 200,
@@ -89,11 +91,12 @@ export const updateContactController = async (req, res) => {
 
 export const deleteContactController = async (req, res) => {
   const { contactId } = req.params;
-  const result = await deleteContactById(contactId);
+  const contact = await getContactById(contactId);
 
-  if (!result) {
+  if (!contact || String(contact.userId) !== String(req.user._id)) {
     throw createError(404, 'Контакт не знайдено');
   }
 
+  await deleteContactById(contactId);
   res.status(204).send();
 };

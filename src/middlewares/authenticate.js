@@ -23,5 +23,5 @@ export const authenticate = async (req, res, next) => {
     next();
   } catch (err) {
     next(createError(401, 'Access token is not valid or expired'));
-  }
+  } 
 };
