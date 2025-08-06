@@ -15,7 +15,7 @@ export const loginController = async (req, res) => {
   res
     .cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      maxAge: refreshExpires, 
+      maxAge: refreshExpires,
       sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
     })

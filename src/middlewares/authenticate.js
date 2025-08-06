@@ -7,7 +7,7 @@ const JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET;
 
 export const authenticate = async (req, res, next) => {
   const authHeader = req.headers.authorization || '';
-  const token = authHeader.replace('Bearer ', '');
+  const token = authHeader.replace('Bearer ', '').trim();
 
   if (!token) return next(createError(401, 'No access token provided'));
 
@@ -23,5 +23,5 @@ export const authenticate = async (req, res, next) => {
     next();
   } catch (err) {
     next(createError(401, 'Access token is not valid or expired'));
-  } 
+  }
 };

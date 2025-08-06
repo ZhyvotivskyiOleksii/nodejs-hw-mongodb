@@ -15,9 +15,12 @@ import {
   createContactSchema,
   updateContactSchema,
 } from '../schemas/contactsSchemas.js';
-
+import { authenticate } from '../middlewares/authenticate.js';
 
 export const contactsRouter = express.Router();
+
+// Захист для всіх роутів (auth-middleware)
+contactsRouter.use(authenticate);
 
 contactsRouter.get('/', ctrlWrapper(getContactsController));
 
@@ -29,7 +32,7 @@ contactsRouter.post(
   ctrlWrapper(createContactController)
 );
 
-contactsRouter.patch(
+contactsRouter.put(
   '/:contactId',
   isValidId,
   validateBody(updateContactSchema),
