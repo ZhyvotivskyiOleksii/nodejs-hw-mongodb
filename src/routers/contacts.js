@@ -19,7 +19,6 @@ import { authenticate } from '../middlewares/authenticate.js';
 
 export const contactsRouter = express.Router();
 
-
 contactsRouter.use(authenticate);
 
 contactsRouter.get('/', ctrlWrapper(getContactsController));
@@ -39,4 +38,8 @@ contactsRouter.put(
   ctrlWrapper(updateContactController)
 );
 
-contactsRouter.delete('/:contactId', isValidId, ctrlWrapper(deleteContactController));
+contactsRouter.delete(
+  '/:contactId',
+  isValidId,
+  ctrlWrapper(deleteContactController)
+);
