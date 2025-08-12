@@ -50,12 +50,12 @@ export const refreshController = async (req, res) => {
       sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
     })
-    .status(200)
-    .json({
-      status: 200,
-      message: 'Successfully refreshed a session!',
-      data: { accessToken },
-    });
+  .status(200)
+  .json({
+    status: 200,
+    message: 'Successfully refreshed a session!',
+    data: { accessToken },
+  });
 };
 
 export const logoutController = async (req, res) => {
@@ -101,7 +101,7 @@ export const resetPassword = async (req, res) => {
   const user = await User.findOne({ email });
   if (!user) throw createError(404, 'User not found!');
 
-  user.password = password;
+  user.password = password;           
   await user.save();
 
   await Session.deleteMany({ userId: user._id });
