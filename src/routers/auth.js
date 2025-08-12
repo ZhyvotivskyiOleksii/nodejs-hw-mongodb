@@ -1,5 +1,12 @@
 import express from 'express';
-import { registerController, loginController, refreshController, logoutController, sendResetEmail, resetPassword } from '../controllers/authController.js';
+import {
+  registerController,
+  loginController,
+  refreshController,
+  logoutController,
+  sendResetEmail,
+  resetPassword,
+} from '../controllers/authController.js';
 import { validateBody } from '../middlewares/validateBody.js';
 import { registerSchema, loginSchema, sendResetEmailSchema, resetPwdSchema } from '../schemas/authSchemas.js';
 

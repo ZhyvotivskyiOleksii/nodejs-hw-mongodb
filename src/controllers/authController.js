@@ -8,7 +8,11 @@ import { sendMail } from '../utils/email.js';
 const { JWT_SECRET, APP_DOMAIN } = process.env;
 
 export const registerController = async (req, res) => {
-  const user = await registerUser(req.body);
+  const body = {
+    ...req.body,
+    email: String(req.body.email || '').trim().toLowerCase(),
+  };
+  const user = await registerUser(body);
   res.status(201).json({
     status: 201,
     message: 'Successfully registered a user!',
@@ -17,7 +21,11 @@ export const registerController = async (req, res) => {
 };
 
 export const loginController = async (req, res) => {
-  const { user, accessToken, refreshToken, refreshExpires } = await loginUser(req.body);
+  const body = {
+    ...req.body,
+    email: String(req.body.email || '').trim().toLowerCase(),
+  };
+  const { user, accessToken, refreshToken, refreshExpires } = await loginUser(body);
   res
     .cookie('refreshToken', refreshToken, {
       httpOnly: true,
@@ -56,21 +64,22 @@ export const logoutController = async (req, res) => {
 };
 
 export const sendResetEmail = async (req, res) => {
-  const { email } = req.body;
+  const email = String(req.body.email || '').trim().toLowerCase();
   const user = await User.findOne({ email });
   if (!user) throw createError(404, 'User not found!');
+
   const token = jwt.sign({ email }, JWT_SECRET, { expiresIn: '5m' });
-  const resetLink = `${APP_DOMAIN.replace(/\/$/, '')}/reset-password?token=${token}`;
+  const base = (APP_DOMAIN || 'http://localhost:3000/auth').replace(/\/$/, '');
+  const resetLink = `${base}/reset-password?token=${encodeURIComponent(token)}`;
+
   const html = `<p>Click <a href="${resetLink}">here</a> to reset your password.</p>`;
+
   try {
-    await sendMail({
-      to: email,
-      subject: 'Reset your password',
-      html,
-    });
+    await sendMail({ to: email, subject: 'Reset your password', html });
   } catch {
     throw createError(500, 'Failed to send the email, please try again later.');
   }
+
   res.status(200).json({
     status: 200,
     message: 'Reset password email has been successfully sent.',
@@ -80,17 +89,23 @@ export const sendResetEmail = async (req, res) => {
 
 export const resetPassword = async (req, res) => {
   const { token, password } = req.body;
+
   let payload;
   try {
     payload = jwt.verify(token, JWT_SECRET);
   } catch {
     throw createError(401, 'Token is expired or invalid.');
   }
-  const user = await User.findOne({ email: payload.email });
+
+  const email = String(payload.email || '').trim().toLowerCase();
+  const user = await User.findOne({ email });
   if (!user) throw createError(404, 'User not found!');
+
   user.password = password;
   await user.save();
+
   await Session.deleteMany({ userId: user._id });
+
   res.status(200).json({
     status: 200,
     message: 'Password has been successfully reset.',
