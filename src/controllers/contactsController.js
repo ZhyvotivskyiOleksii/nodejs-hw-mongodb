@@ -89,3 +89,21 @@ export const deleteContactController = async (req, res) => {
   if (!deletedContact) throw createError(404, 'Контакт не знайдено');
   res.status(204).send();
 };
+
+export const updateFavoriteController = async (req, res) => {
+  const { contactId } = req.params;
+  const { isFavourite } = req.body;
+
+  if (typeof isFavourite !== 'boolean') {
+    throw createError(400, 'Missing field isFavourite');
+  }
+
+  const updated = await updateContactById(contactId, req.user._id, { isFavourite });
+  if (!updated) throw createError(404, 'Контакт не знайдено');
+
+  res.status(200).json({
+    status: 200,
+    message: 'Контакт успішно оновлено!',
+    data: updated,
+  });
+};
