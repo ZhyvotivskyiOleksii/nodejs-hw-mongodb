@@ -1,12 +1,13 @@
 import createError from 'http-errors';
 import {
+  getContacts,
+  getContactsCount,
   getContactById,
   createContact,
   updateContactById,
   deleteContactById,
 } from '../services/contacts.js';
 
-// Отримати всі контакти
 export const getContactsController = async (req, res) => {
   const {
     page = 1,
@@ -47,14 +48,10 @@ export const getContactsController = async (req, res) => {
   });
 };
 
-// Отримати контакт по id
 export const getContactByIdController = async (req, res) => {
   const { contactId } = req.params;
   const contact = await getContactById(contactId, req.user._id);
-
-  if (!contact) {
-    throw createError(404, 'Контакт не знайдено');
-  }
+  if (!contact) throw createError(404, 'Контакт не знайдено');
 
   res.status(200).json({
     status: 200,
@@ -63,7 +60,6 @@ export const getContactByIdController = async (req, res) => {
   });
 };
 
-// Створити контакт
 export const createContactController = async (req, res) => {
   const contactData = { ...req.body, userId: req.user._id };
   const newContact = await createContact(contactData);
@@ -75,14 +71,10 @@ export const createContactController = async (req, res) => {
   });
 };
 
-// Оновити контакт
 export const updateContactController = async (req, res) => {
   const { contactId } = req.params;
   const updatedContact = await updateContactById(contactId, req.user._id, req.body);
-
-  if (!updatedContact) {
-    throw createError(404, 'Контакт не знайдено');
-  }
+  if (!updatedContact) throw createError(404, 'Контакт не знайдено');
 
   res.status(200).json({
     status: 200,
@@ -91,14 +83,9 @@ export const updateContactController = async (req, res) => {
   });
 };
 
-// Видалити контакт
 export const deleteContactController = async (req, res) => {
   const { contactId } = req.params;
   const deletedContact = await deleteContactById(contactId, req.user._id);
-
-  if (!deletedContact) {
-    throw createError(404, 'Контакт не знайдено');
-  }
-
+  if (!deletedContact) throw createError(404, 'Контакт не знайдено');
   res.status(204).send();
 };
