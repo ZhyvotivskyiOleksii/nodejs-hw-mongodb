@@ -103,7 +103,7 @@ export const updateFavoriteController = async (req, res) => {
 
   res.status(200).json({
     status: 200,
-    message: 'Контакт успішно оновлено!',
+    message: 'Вітаю! Контакт успішно оновлено!',
     data: updated,
   });
 };
