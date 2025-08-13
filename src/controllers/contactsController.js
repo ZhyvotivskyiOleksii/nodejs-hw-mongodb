@@ -119,7 +119,7 @@ export const updateFavoriteController = async (req, res) => {
   if (!updated) throw createError(404, 'Контакт не знайдено');
   res.status(200).json({
     status: 200,
-    message: 'Контакт успішно оновлено!',
+    message: 'Вітаю! Контакт успішно оновлено!',
     data: updated,
   });
 };
