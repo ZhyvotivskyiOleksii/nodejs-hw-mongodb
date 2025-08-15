@@ -10,48 +10,58 @@ import {
 } from '../controllers/contactsController.js';
 import { isValidId } from '../middlewares/isValidId.js';
 import { validateBody } from '../middlewares/validateBody.js';
-import { createContactSchema, updateContactSchema, updateFavoriteSchema } from '../schemas/contactsSchemas.js';
+import {
+  createContactSchema,
+  updateContactSchema,
+  updateFavoriteSchema,
+} from '../schemas/contactsSchemas.js';
 import { authenticate } from '../middlewares/authenticate.js';
 import { upload } from '../middlewares/upload.js';
 
 export const contactsRouter = express.Router();
 
+// Авторизація на всі маршрути всередині роутера
 contactsRouter.use(authenticate);
 
+// GET /contacts
 contactsRouter.get('/', ctrlWrapper(getContactsController));
+
+// GET /contacts/:contactId
 contactsRouter.get('/:contactId', isValidId, ctrlWrapper(getContactByIdController));
 
+// POST /contacts  (multipart або json — обидва ок)
 contactsRouter.post(
   '/',
   upload.single('photo'),
   validateBody(createContactSchema),
-  ctrlWrapper(createContactController)
+  ctrlWrapper(createContactController),
 );
 
-// PUT (повне оновлення) — залишаємо як було
+// PATCH /contacts/:contactId   <-- головний для оновлення
+contactsRouter.patch(
+  '/:contactId',
+  isValidId,
+  upload.single('photo'),
+  validateBody(updateContactSchema),
+  ctrlWrapper(updateContactController),
+);
+
+// (опційно) PUT /contacts/:contactId — якщо треба для ДЗ
 contactsRouter.put(
   '/:contactId',
   isValidId,
   upload.single('photo'),
   validateBody(updateContactSchema),
-  ctrlWrapper(updateContactController)
+  ctrlWrapper(updateContactController),
 );
 
-contactsRouter.delete('/:contactId', isValidId, ctrlWrapper(deleteContactController));
-
-// PATCH /contacts/:contactId/favorite — має йти ПЕРЕД загальним PATCH /:contactId
+// PATCH /contacts/:contactId/favorite
 contactsRouter.patch(
   '/:contactId/favorite',
   isValidId,
   validateBody(updateFavoriteSchema),
-  ctrlWrapper(updateFavoriteController)
+  ctrlWrapper(updateFavoriteController),
 );
 
-// PATCH /contacts/:contactId — часткове оновлення (partial)
-contactsRouter.patch(
-  '/:contactId',
-  isValidId,
-  upload.single('photo'),
-  validateBody(updateContactSchema), // updateContactSchema має бути .min(1)
-  ctrlWrapper(updateContactController)
-);
+// DELETE /contacts/:contactId
+contactsRouter.delete('/:contactId', isValidId, ctrlWrapper(deleteContactController));
