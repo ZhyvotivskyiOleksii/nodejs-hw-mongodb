@@ -23,14 +23,11 @@ export const setupServer = () => {
     res.json({ message: 'Сервер працює! ✌️' });
   });
 
-  // ВАЖЛИВО: без додаткового authenticate тут
   app.use('/auth', authRouter);
+  // ВАЖЛИВО: без authenticate тут (він уже в contactsRouter)
   app.use('/contacts', contactsRouter);
 
-  // 404 після всіх роутів
   app.use(notFoundHandler);
-
-  // Глобальний хендлер помилок
   app.use(errorHandler);
 
   const PORT = process.env.PORT || 3000;

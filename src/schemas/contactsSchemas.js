@@ -2,7 +2,7 @@ import Joi from 'joi';
 
 export const createContactSchema = Joi.object({
   name: Joi.string().trim().min(1).required(),
-  phoneNumber: Joi.string().trim().min(3).required(),   // <-- ВАЖЛИВО
+  phoneNumber: Joi.string().trim().min(3).required(),   // <— було phone, має бути phoneNumber
   email: Joi.string().trim().email().optional(),
   isFavourite: Joi.boolean().optional(),
   contactType: Joi.string().valid('work', 'home', 'personal').required(),
@@ -10,7 +10,7 @@ export const createContactSchema = Joi.object({
 
 export const updateContactSchema = Joi.object({
   name: Joi.string().trim().min(1),
-  phoneNumber: Joi.string().trim().min(3),               // <-- ВАЖЛИВО
+  phoneNumber: Joi.string().trim().min(3),               // <— теж phoneNumber
   email: Joi.string().trim().email(),
   isFavourite: Joi.boolean(),
   contactType: Joi.string().valid('work', 'home', 'personal'),
