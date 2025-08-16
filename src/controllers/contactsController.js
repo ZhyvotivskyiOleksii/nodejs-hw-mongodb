@@ -10,12 +10,26 @@ import {
 import { cloudinary } from '../utils/cloudinary.js';
 import stream from 'stream';
 
-const uploadBufferToCloudinary = (buffer, folder = 'contacts') =>
+// >>> додали: читаємо папку з ENV
+const CLD_FOLDER = process.env.CLOUDINARY_FOLDER || 'contacts';
+
+// >>> оновили з детальним логуванням помилки
+const uploadBufferToCloudinary = (buffer, folder = CLD_FOLDER) =>
   new Promise((resolve, reject) => {
     const pass = new stream.PassThrough();
     const upload = cloudinary.uploader.upload_stream(
       { folder, resource_type: 'image' },
-      (err, result) => (err ? reject(err) : resolve(result))
+      (err, result) => {
+        if (err) {
+          console.error('[CLD] upload_stream error:', {
+            message: err?.message,
+            http_code: err?.http_code,
+            name: err?.name,
+          });
+          return reject(err);
+        }
+        return resolve(result);
+      }
     );
     pass.end(buffer);
     pass.pipe(upload);
@@ -74,10 +88,17 @@ export const getContactByIdController = async (req, res) => {
 
 export const createContactController = async (req, res) => {
   const contactData = { ...req.body, userId: req.user._id };
+
+  // >>> try/catch — не валимо запит, якщо аплоад не вдався
   if (req.file?.buffer) {
-    const result = await uploadBufferToCloudinary(req.file.buffer);
-    contactData.photo = result.secure_url;
+    try {
+      const result = await uploadBufferToCloudinary(req.file.buffer);
+      contactData.photo = result.secure_url;
+    } catch (e) {
+      console.warn('[CLD] skip photo on create:', e?.message);
+    }
   }
+
   const newContact = await createContact(contactData);
   res.status(201).json({
     status: 201,
@@ -89,10 +110,17 @@ export const createContactController = async (req, res) => {
 export const updateContactController = async (req, res) => {
   const { contactId } = req.params;
   const data = { ...req.body };
+
+  // >>> try/catch — не валимо запит, якщо аплоад не вдався
   if (req.file?.buffer) {
-    const result = await uploadBufferToCloudinary(req.file.buffer);
-    data.photo = result.secure_url;
+    try {
+      const result = await uploadBufferToCloudinary(req.file.buffer);
+      data.photo = result.secure_url;
+    } catch (e) {
+      console.warn('[CLD] skip photo on update:', e?.message);
+    }
   }
+
   const updatedContact = await updateContactById(contactId, req.user._id, data);
   if (!updatedContact) throw createError(404, 'Контакт не знайдено');
   res.status(200).json({
