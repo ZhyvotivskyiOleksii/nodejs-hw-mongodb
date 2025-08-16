@@ -25,7 +25,7 @@ export const setupServer = () => {
 
   app.use('/auth', authRouter);
 
-  // ✅ без authenticate тут, бо він уже є всередині contactsRouter
+
   app.use('/contacts', contactsRouter);
 
   app.use(notFoundHandler);

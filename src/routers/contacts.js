@@ -20,7 +20,7 @@ import { upload } from '../middlewares/upload.js';
 
 export const contactsRouter = express.Router();
 
-// лишаємо автентифікацію тут (а з server.js приберемо)
+// Захищаємо всі контакти
 contactsRouter.use(authenticate);
 
 // GET /contacts
@@ -29,39 +29,39 @@ contactsRouter.get('/', ctrlWrapper(getContactsController));
 // GET /contacts/:contactId
 contactsRouter.get('/:contactId', isValidId, ctrlWrapper(getContactByIdController));
 
-// POST /contacts
+// POST /contacts  (підтримує multipart/form-data з файлом photo)
 contactsRouter.post(
   '/',
   upload.single('photo'),
   validateBody(createContactSchema),
-  ctrlWrapper(createContactController),
+  ctrlWrapper(createContactController)
 );
 
-// PUT /contacts/:contactId (повне оновлення — якщо потрібно)
+// PUT /contacts/:contactId  (повне оновлення, також приймає photo)
 contactsRouter.put(
   '/:contactId',
   isValidId,
   upload.single('photo'),
   validateBody(updateContactSchema),
-  ctrlWrapper(updateContactController),
+  ctrlWrapper(updateContactController)
 );
 
 // DELETE /contacts/:contactId
 contactsRouter.delete('/:contactId', isValidId, ctrlWrapper(deleteContactController));
 
-// PATCH /contacts/:contactId/favorite — має йти ПЕРЕД загальним PATCH
+// PATCH /contacts/:contactId/favorite  (спеціальне поле — має бути ПЕРЕД загальним PATCH)
 contactsRouter.patch(
   '/:contactId/favorite',
   isValidId,
   validateBody(updateFavoriteSchema),
-  ctrlWrapper(updateFavoriteController),
+  ctrlWrapper(updateFavoriteController)
 );
 
-// ✅ ЗАГАЛЬНИЙ PATCH /contacts/:contactId (часткове оновлення)
+// PATCH /contacts/:contactId  (часткове оновлення, як на скріні ментора)
 contactsRouter.patch(
   '/:contactId',
   isValidId,
   upload.single('photo'),
-  validateBody(updateContactSchema), // schema має бути .min(1)
-  ctrlWrapper(updateContactController),
+  validateBody(updateContactSchema),
+  ctrlWrapper(updateContactController)
 );
