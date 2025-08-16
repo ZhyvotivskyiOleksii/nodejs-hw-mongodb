@@ -10,33 +10,24 @@ import { contactsRouter } from './routers/contacts.js';
 import { authRouter } from './routers/auth.js';
 import { notFoundHandler } from './middlewares/notFoundHandler.js';
 import { errorHandler } from './middlewares/errorHandler.js';
-import { authenticate } from './middlewares/authenticate.js'; // Додаємо мідлвару
 
 export const setupServer = () => {
   const app = express();
 
-  
-  app.use(cors({
-    origin: true,
-    credentials: true,
-  }));
-
+  app.use(cors({ origin: true, credentials: true }));
   app.use(pino());
   app.use(express.json());
-  app.use(cookieParser()); 
+  app.use(cookieParser());
 
-  
   app.get('/', (req, res) => {
     res.json({ message: 'Сервер працює! ✌️' });
   });
 
-  
   app.use('/auth', authRouter);
 
-  
-  app.use('/contacts', authenticate, contactsRouter);
+  // ✅ без authenticate тут, бо він уже є всередині contactsRouter
+  app.use('/contacts', contactsRouter);
 
-  
   app.use(notFoundHandler);
   app.use(errorHandler);
 
