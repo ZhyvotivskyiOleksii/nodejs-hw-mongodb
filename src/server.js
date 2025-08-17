@@ -5,11 +5,19 @@ import express from 'express';
 import cors from 'cors';
 import pino from 'pino-http';
 import cookieParser from 'cookie-parser';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import swaggerUi from 'swagger-ui-express';
+import fs from 'node:fs';
 
 import { contactsRouter } from './routers/contacts.js';
 import { authRouter } from './routers/auth.js';
 import { notFoundHandler } from './middlewares/notFoundHandler.js';
 import { errorHandler } from './middlewares/errorHandler.js';
+
+// щоб мати __dirname в ESM
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const swaggerJsonPath = path.resolve(__dirname, '../docs/swagger.json');
 
 export const setupServer = () => {
   const app = express();
@@ -23,8 +31,17 @@ export const setupServer = () => {
     res.json({ message: 'Сервер працює! ✌️' });
   });
 
+  // Swagger UI
+  app.use('/api-docs', swaggerUi.serve, async (req, res) => {
+    try {
+      const doc = JSON.parse(fs.readFileSync(swaggerJsonPath, 'utf-8'));
+      return res.send(swaggerUi.generateHTML(doc));
+    } catch (e) {
+      return res.status(500).json({ message: 'Swagger is not built yet' });
+    }
+  });
+
   app.use('/auth', authRouter);
-  // ВАЖЛИВО: без authenticate тут (він уже в contactsRouter)
   app.use('/contacts', contactsRouter);
 
   app.use(notFoundHandler);
@@ -33,5 +50,6 @@ export const setupServer = () => {
   const PORT = process.env.PORT || 3000;
   app.listen(PORT, () => {
     console.log(`✅ Server is running on port ${PORT}`);
+    console.log(`📖 Swagger docs available at http://localhost:${PORT}/api-docs`);
   });
 };
